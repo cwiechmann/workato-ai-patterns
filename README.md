@@ -38,19 +38,20 @@ build, including the design decisions, the bugs found through testing,
 and the fixes. Case studies are anonymized where they draw on real
 customer conversations.
 
-## Using this with Claude Code
+## Using this with Claude Code or Cowork
 
-This repo includes a root-level `CLAUDE.md` that Claude Code loads
-automatically when you open the repo — it pulls in all three guides
-via `@` imports, so cloning the repo and starting a session gives
-Claude the full context immediately. No setup required.
+This repo includes a root-level `CLAUDE.md` that both Claude Code and
+Claude Cowork load automatically when you open the repo folder — it
+pulls in all three guides via `@` imports, so cloning the repo and
+starting a session gives Claude the full context immediately. No setup
+required.
 
-## Using this with Claude Desktop or claude.ai Projects
+## Using this with claude.ai Projects
 
-Desktop and web Projects don't automatically scan a cloned repo the
-way Claude Code does. To get the same context there, manually add the
-three files under `/guides/` (or `CLAUDE.md` itself) as project
-knowledge / uploaded files when you set up the project.
+The web/chat Projects feature doesn't automatically scan a cloned
+repo the way Claude Code and Cowork do. To get the same context there,
+manually add the three files under `/guides/` (or `CLAUDE.md` itself)
+as project knowledge when you set up the project.
 
 ## How to use this repo
 
