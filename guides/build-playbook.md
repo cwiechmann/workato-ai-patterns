@@ -7,6 +7,74 @@ whenever helping design or build a similar system: an AI agent that
 researches, reasons, and takes action through a set of tools, with real
 data and real consequences.
 
+## 0. Kickoff checklist — before designing anything
+
+Before scoping any of the patterns below, ask the person directly for
+answers to these questions — as an explicit set of clarifying
+questions at the start of the engagement, not something inferred
+silently from context or carried over from a previous session.
+Skipping this tends to surface as rework later, once assumptions
+collide with what the person actually wanted.
+
+- **Build mode.** Will this be built using the platform's own AI build
+  agent (e.g. Workato's AIRO), a fully manual build, an AI assistant
+  driving the builder tools directly, or a CLI/code-based workflow
+  (e.g. the open-source Workato Labs toolkit — the `wk` CLI, its
+  recipe linter, and the recipe visualizer — for authoring recipes as
+  code in a local editor and pushing them to a workspace; experimental
+  and community-supported, not an officially SLA'd product as of this
+  writing)? This determines who does what for everything that follows.
+- **The assistant's role for this engagement.** Active builder using
+  tools directly, an advisor producing specs and schemas for manual
+  entry, or a hybrid that drafts and waits for approval at each step?
+  State this plainly rather than letting it default — and expect it to
+  be re-confirmed per session, not assumed to carry over from a
+  previous one.
+- **Delivery format for advisory output.** When the assistant is an
+  advisor drafting specs, schemas, or instructions rather than building
+  directly, default to discussing and presenting them conversationally
+  in the chat, not as a saved file — only create a file when the
+  person explicitly asks to save, export, or share it as one. Don't
+  infer a file is wanted just because the content is long or
+  structured.
+- **Read vs. write tool permission.** Can the assistant read the current
+  state of the target environment for grounding, even if it won't
+  create or change anything, or should it stay off the builder tools
+  entirely?
+- **Target environment.** Only relevant if the assistant has any tool
+  access (read or write, per the item above) to the platform — in a
+  fully manual build with no tool access, the specific project or
+  workspace name doesn't change anything the assistant drafts, so skip
+  this question. When it does apply, name the specific project,
+  workspace, or folder up front, rather than discovering it mid-build.
+- **Pace of delivery.** Confirm whether building one piece at a time
+  (the default throughout this playbook) applies as-is, or whether the
+  audience or format calls for larger, batched increments.
+- **Reference material visibility.** Only relevant for a *new* project
+  where a separate, similar system happens to already exist elsewhere
+  — decide whether the assistant should treat it as an open reference
+  throughout the build, or work from requirements alone, so the build
+  isn't silently anchored to — or silently ignoring — prior art. This
+  doesn't apply to a rebuild of the system itself: `CLAUDE.md`'s step 3
+  already makes that system the authoritative source, so re-asking
+  this during the section 0 checklist is redundant and confusing —
+  skip it in that case.
+- **External environment readiness.** Which connections, credentials,
+  or integrations need to already be authorized in the target
+  environment before build work, or any demo of it, can proceed without
+  stalling.
+- **Data and naming used during the build.** Confirm whether example
+  data, company names, or scenarios are fictional or need anonymizing,
+  particularly if any output will be shared outside the immediate team.
+- **Scope and time-box.** Is the goal a complete end-to-end system in
+  one sitting, or a defined subset / phased delivery?
+
+If, after asking, a question still doesn't have a clear answer — the
+person is unsure, or says it doesn't matter for this session — propose
+a specific default and state the assumption plainly, rather than
+leaving it ambiguous. This is the same principle `genie-skill-design.md`
+applies to individual skill design, applied here at the project level.
+
 ## 1. Division of responsibility between skills and the agent
 
 - Skills (recipes exposed as tools) fetch or persist data. They never
@@ -19,9 +87,11 @@ data and real consequences.
   as a fixed rule, encode it once in the skill, not as a rule the agent
   must recall and apply correctly every time.
 - Name a skill after its actual behavior, not its original intent.
-  Revisit the name whenever behavior evolves — a skill that started as
-  "create" but became "find or create" needs a new name (e.g. "register")
-  so its own name doesn't mislead the agent about what it does.
+  Revisit the name whenever behavior evolves — for example, a skill
+  that started as "create" but grew into "find or create" needs a new
+  name (one past build renamed it to "register") so its own name
+  doesn't mislead the agent about what it does. Treat this as one
+  illustration of the pattern, not the specific rename to apply.
 - Give every skill an explicit WHEN TO USE and WHEN NOT TO USE section.
   Put ordering dependencies and preconditions here explicitly — an agent
   will parallelize calls that look independent unless told a dependency
@@ -31,9 +101,10 @@ data and real consequences.
 
 ## 2. Controlling entry into an automated pipeline
 
-- When several different paths (manual entry, self-service submission,
-  agent-driven creation, bulk import) can all create the same kind of
-  record, funnel them through one shared "register" skill rather than
+- When several different paths can all create the same kind of record
+  — the actual set varies by project, but common examples are manual
+  entry, self-service submission, agent-driven creation, and bulk
+  import — funnel them through one shared "register" skill rather than
   separate paths per entry point.
 - Give that skill an explicit boolean controlling whether the new record
   enters downstream automation, plus an optional override for the
@@ -61,18 +132,25 @@ data and real consequences.
   threshold explicitly, and let the agent apply judgment near the
   boundary rather than treating it as a strict cutoff.
 
-## 4. Identifier and URL normalization
+## 4. Identifier normalization
 
 - Distinguish two different needs that are easy to conflate:
-  - Canonical identity for deduplication (e.g. collapsing protocol,
-    "www", and subdomains down to a base identity).
-  - Superficial cleanup that preserves identity (e.g. stripping a
-    trailing slash, query string, or fragment, but keeping a path that
-    is part of what makes the record unique).
+  - Canonical identity for deduplication — collapsing superficial
+    variation down to one base identity so the same real-world thing
+    is never recorded twice. Examples: a URL's protocol, "www.", and
+    subdomains; an email address's casing or plus-addressing; an
+    external system's ID with or without a leading zero or prefix.
+  - Superficial cleanup that preserves identity — normalizing
+    formatting without collapsing anything actually distinguishing.
+    Examples: stripping a URL's trailing slash, query string, or
+    fragment while keeping a path that's part of what makes the record
+    unique; trimming whitespace from a name or ID without changing
+    what it refers to.
 - Reusing a "collapse to base identity" normalizer on something that
-  needs its distinguishing path preserved is a common and easy-to-miss
-  bug. If two different kinds of identifiers exist in the same system,
-  give them two different normalization functions.
+  needs its distinguishing part preserved is a common and easy-to-miss
+  bug. If two different kinds of identifiers exist in the same system
+  — say, a dedup key and a display value — give them two different
+  normalization functions, whatever the identifier type happens to be.
 
 ## 5. Skill output schema conventions
 

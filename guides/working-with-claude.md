@@ -61,6 +61,15 @@ context.
     "hint": "A description of the business, its target audience, and its main experience offerings, based on the page content."
   }
   ```
+- **Deliver both the schema and any instruction text copy-paste ready,
+  not summarized.** A schema must be presented as actual, valid JSON
+  in the exact shape above — a real array of field objects — ready to
+  paste directly into Workato, never as a markdown table describing
+  the fields instead of the JSON itself. A skill's description or the
+  Genie's own instructions must be given as plain, unformatted text
+  ready to paste as-is into the relevant field, not dressed up with
+  markdown headers, bold, or tables that wouldn't survive being pasted
+  into a plain text box.
 - **If a skill must never run before another skill has completed**,
   don't rely on prose alone to say so. Add a required input whose
   value can only come from the other skill's output, so the ordering
